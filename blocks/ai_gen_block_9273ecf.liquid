@@ -1,0 +1,756 @@
+{% doc %}
+  @prompt
+    Create a product section, it should have a random shuffle effect, I will select a collection myself, then when ever page is reloaded, it should shuffle that collection in-front of users under 1-2 seconds of delay and should show in skeleton in the meantime, and when ever it displays the products, it should display it on random columns with random height, images shouldn't pixelate, it should smartly detect that which images are compatible. And name this section `Best Selling Collection`, but this should be changeable whenever I want.
+    
+    This section should be like a random grid shuffler, which randomly shuffles the products and display together, without spacing, and should be 100% responsive and full width, for both mobile and desktop screens.
+    
+    Should be very conversion focused, with proper color theme, use red, white and dark grey, for specific things, to attract more customers. Make sure this section is 100% conversion focused for customers, add effects like hover, or anything, which increases the chances of getting sales or product clicks.
+    
+    but do make sure that everything is responsive and mainly focus on conversion., but add a background color to pricing, like white background because few products have red color so pricing text isnt't properly visible.
+    
+    And make sure that from bottom, it should cover the empty space, currently, it there's empty space from bottom, but shuffling is perfectly working, just fix it from bottom, to cover the empty space as well accurately, Also add icons on product cards, for add to card and buy now, and it should be functional. And in product name, white color is perfect, just add a black outline, if in case any product bg is white or product itself is white, so text should be visible properly.
+    
+    Also add a preview option, like an eye icon, in case don't want to go to product page and just want to see the product image on full width without being redirected, then for this, just open a image modal, add this for both large screen and small screen.
+    
+    Don't break anything, make sure everything is wired-up, don't break anything. And do make sure everything is also responsive and 100% conversion focused.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-shuffle-grid-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.section_padding }}px 0;
+  }
+
+  .ai-shuffle-grid-container-{{ ai_gen_id }} {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .ai-shuffle-grid-header-{{ ai_gen_id }} {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 0 20px;
+  }
+
+  .ai-shuffle-grid-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.heading_size }}px;
+    color: {{ block.settings.heading_color }};
+    margin: 0;
+    font-weight: 700;
+  }
+
+  .ai-shuffle-grid-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+  }
+
+  .ai-shuffle-grid-masonry-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-auto-rows: 10px;
+    grid-auto-flow: dense;
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+  }
+
+  .ai-shuffle-grid-masonry-{{ ai_gen_id }}.loaded {
+    opacity: 1;
+  }
+
+  .ai-shuffle-grid-item-{{ ai_gen_id }} {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .ai-shuffle-grid-item-{{ ai_gen_id }}:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+  }
+
+  .ai-shuffle-grid-item-link-{{ ai_gen_id }} {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .ai-shuffle-grid-image-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #f5f5f5;
+  }
+
+  .ai-shuffle-grid-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .ai-shuffle-grid-item-{{ ai_gen_id }}:hover .ai-shuffle-grid-image-{{ ai_gen_id }} {
+    transform: scale(1.08);
+  }
+
+  .ai-shuffle-grid-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+    padding: 20px 15px 15px;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+  }
+
+  .ai-shuffle-grid-item-{{ ai_gen_id }}:hover .ai-shuffle-grid-overlay-{{ ai_gen_id }} {
+    transform: translateY(-5px);
+  }
+
+  .ai-shuffle-grid-product-title-{{ ai_gen_id }} {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 8px;
+    line-height: 1.3;
+    text-shadow: 
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      0 0 3px rgba(0, 0, 0, 0.8);
+  }
+
+  .ai-shuffle-grid-product-price-{{ ai_gen_id }} {
+    display: inline-block;
+    font-size: 18px;
+    font-weight: 700;
+    color: {{ block.settings.price_color }};
+    background-color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin: 0;
+  }
+
+  .ai-shuffle-grid-badge-{{ ai_gen_id }} {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background-color: {{ block.settings.badge_color }};
+    color: #ffffff;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 4px;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .ai-shuffle-grid-actions-{{ ai_gen_id }} {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 6;
+  }
+
+  .ai-shuffle-grid-item-{{ ai_gen_id }}:hover .ai-shuffle-grid-actions-{{ ai_gen_id }} {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .ai-shuffle-grid-action-btn-{{ ai_gen_id }} {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    color: #2d2d2d;
+  }
+
+  .ai-shuffle-grid-action-btn-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.badge_color }};
+    color: #ffffff;
+    transform: scale(1.1);
+  }
+
+  .ai-shuffle-grid-action-btn-{{ ai_gen_id }} svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ai-shuffle-grid-skeleton-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-auto-rows: 10px;
+    gap: 0;
+    z-index: 100;
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-shuffle-grid-skeleton-item-{{ ai_gen_id }} {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: ai-skeleton-loading-{{ ai_gen_id }} 1.5s infinite;
+  }
+
+  @keyframes ai-skeleton-loading-{{ ai_gen_id }} {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .ai-shuffle-grid-empty-{{ ai_gen_id }} {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-size: 16px;
+  }
+
+  .ai-shuffle-grid-modal-{{ ai_gen_id }} {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .ai-shuffle-grid-modal-{{ ai_gen_id }}.active {
+    display: flex;
+  }
+
+  .ai-shuffle-grid-modal-content-{{ ai_gen_id }} {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    width: auto;
+    height: auto;
+  }
+
+  .ai-shuffle-grid-modal-image-{{ ai_gen_id }} {
+    max-width: 100%;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .ai-shuffle-grid-modal-close-{{ ai_gen_id }} {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background-color: #ffffff;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+  }
+
+  .ai-shuffle-grid-modal-close-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.badge_color }};
+    color: #ffffff;
+  }
+
+  .ai-shuffle-grid-modal-close-{{ ai_gen_id }} svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-shuffle-grid-masonry-{{ ai_gen_id }} {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .ai-shuffle-grid-skeleton-{{ ai_gen_id }} {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .ai-shuffle-grid-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size | times: 0.7 }}px;
+    }
+
+    .ai-shuffle-grid-product-title-{{ ai_gen_id }} {
+      font-size: 14px;
+    }
+
+    .ai-shuffle-grid-product-price-{{ ai_gen_id }} {
+      font-size: 16px;
+      padding: 5px 10px;
+    }
+
+    .ai-shuffle-grid-actions-{{ ai_gen_id }} {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .ai-shuffle-grid-action-btn-{{ ai_gen_id }} {
+      width: 38px;
+      height: 38px;
+    }
+
+    .ai-shuffle-grid-action-btn-{{ ai_gen_id }} svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .ai-shuffle-grid-modal-close-{{ ai_gen_id }} {
+      top: 10px;
+      right: 10px;
+    }
+  }
+{% endstyle %}
+
+<shuffle-grid-{{ ai_gen_id }}
+  class="ai-shuffle-grid-{{ ai_gen_id }}"
+  data-delay="{{ block.settings.shuffle_delay }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="ai-shuffle-grid-container-{{ ai_gen_id }}">
+    {% if block.settings.section_title != blank %}
+      <div class="ai-shuffle-grid-header-{{ ai_gen_id }}">
+        <h2 class="ai-shuffle-grid-title-{{ ai_gen_id }}">{{ block.settings.section_title }}</h2>
+      </div>
+    {% endif %}
+
+    <div class="ai-shuffle-grid-wrapper-{{ ai_gen_id }}">
+      <div class="ai-shuffle-grid-skeleton-{{ ai_gen_id }}" data-skeleton>
+        {% for i in (1..12) %}
+          {% assign height = i | modulo: 3 | plus: 2 | times: 15 %}
+          <div
+            class="ai-shuffle-grid-skeleton-item-{{ ai_gen_id }}"
+            style="grid-row: span {{ height }};"
+          ></div>
+        {% endfor %}
+      </div>
+
+      {% if block.settings.collection != blank %}
+        <div class="ai-shuffle-grid-masonry-{{ ai_gen_id }}" data-masonry>
+          {% for product in block.settings.collection.products limit: block.settings.products_limit %}
+            <div class="ai-shuffle-grid-item-{{ ai_gen_id }}" data-product-item>
+              <div class="ai-shuffle-grid-item-link-{{ ai_gen_id }}">
+                <div class="ai-shuffle-grid-image-wrapper-{{ ai_gen_id }}">
+                  {% if product.featured_image %}
+                    <img
+                      src="{{ product.featured_image | image_url: width: 800 }}"
+                      alt="{{ product.featured_image.alt | escape }}"
+                      class="ai-shuffle-grid-image-{{ ai_gen_id }}"
+                      loading="lazy"
+                      width="800"
+                      height="800"
+                      data-full-image="{{ product.featured_image | image_url: width: 2000 }}"
+                    >
+                  {% else %}
+                    <div class="ai-shuffle-grid-image-placeholder-{{ ai_gen_id }}">
+                      {{ 'product-1' | placeholder_svg_tag }}
+                    </div>
+                  {% endif %}
+
+                  {% if product.compare_at_price > product.price %}
+                    <div class="ai-shuffle-grid-badge-{{ ai_gen_id }}">
+                      Sale
+                    </div>
+                  {% endif %}
+
+                  <div class="ai-shuffle-grid-actions-{{ ai_gen_id }}">
+                    <button
+                      class="ai-shuffle-grid-action-btn-{{ ai_gen_id }}"
+                      data-preview-btn
+                      aria-label="Quick view"
+                      type="button"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+                    <button
+                      class="ai-shuffle-grid-action-btn-{{ ai_gen_id }}"
+                      data-add-to-cart
+                      data-product-id="{{ product.selected_or_first_available_variant.id }}"
+                      aria-label="Add to cart"
+                      type="button"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </button>
+                    <a
+                      href="/cart/{{ product.selected_or_first_available_variant.id }}:1"
+                      class="ai-shuffle-grid-action-btn-{{ ai_gen_id }}"
+                      aria-label="Buy now"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </a>
+                  </div>
+
+                  <a href="{{ product.url }}" class="ai-shuffle-grid-overlay-{{ ai_gen_id }}">
+                    <h3 class="ai-shuffle-grid-product-title-{{ ai_gen_id }}">{{ product.title }}</h3>
+                    <div class="ai-shuffle-grid-product-price-{{ ai_gen_id }}">
+                      {{ product.price | money }}
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="ai-shuffle-grid-empty-{{ ai_gen_id }}">
+          Select a collection to display products
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ai-shuffle-grid-modal-{{ ai_gen_id }}" data-modal>
+    <div class="ai-shuffle-grid-modal-content-{{ ai_gen_id }}">
+      <button
+        class="ai-shuffle-grid-modal-close-{{ ai_gen_id }}"
+        data-modal-close
+        aria-label="Close"
+        type="button"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <img
+        src=""
+        alt=""
+        class="ai-shuffle-grid-modal-image-{{ ai_gen_id }}"
+        data-modal-image
+      >
+    </div>
+  </div>
+</shuffle-grid-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class ShuffleGrid{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.skeleton = this.querySelector('[data-skeleton]');
+        this.masonry = this.querySelector('[data-masonry]');
+        this.wrapper = this.querySelector('.ai-shuffle-grid-wrapper-{{ ai_gen_id }}');
+        this.modal = this.querySelector('[data-modal]');
+        this.modalImage = this.querySelector('[data-modal-image]');
+        this.modalClose = this.querySelector('[data-modal-close]');
+        this.items = [];
+        this.delay = parseInt(this.dataset.delay) || 1500;
+      }
+
+      connectedCallback() {
+        if (!this.masonry) return;
+        
+        this.items = Array.from(this.masonry.querySelectorAll('[data-product-item]'));
+        
+        if (this.items.length === 0) return;
+
+        this.setupEventListeners();
+        this.shuffleAndDisplay();
+      }
+
+      setupEventListeners() {
+        this.addEventListener('click', (e) => {
+          const previewBtn = e.target.closest('[data-preview-btn]');
+          if (previewBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.openPreview(previewBtn);
+            return;
+          }
+
+          const addToCartBtn = e.target.closest('[data-add-to-cart]');
+          if (addToCartBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.addToCart(addToCartBtn);
+            return;
+          }
+        });
+
+        if (this.modalClose) {
+          this.modalClose.addEventListener('click', () => this.closeModal());
+        }
+
+        if (this.modal) {
+          this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+              this.closeModal();
+            }
+          });
+        }
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+            this.closeModal();
+          }
+        });
+      }
+
+      openPreview(btn) {
+        const item = btn.closest('[data-product-item]');
+        const img = item.querySelector('.ai-shuffle-grid-image-{{ ai_gen_id }}');
+        
+        if (img && this.modalImage) {
+          const fullImageUrl = img.dataset.fullImage || img.src;
+          const altText = img.alt;
+          
+          this.modalImage.src = fullImageUrl;
+          this.modalImage.alt = altText;
+          this.modal.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+
+      closeModal() {
+        this.modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      addToCart(btn) {
+        const variantId = btn.dataset.productId;
+        
+        if (!variantId) return;
+
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>';
+        btn.disabled = true;
+
+        fetch('/cart/add.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: variantId,
+            quantity: 1
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+          
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+          }, 1500);
+
+          if (window.theme && window.theme.cart) {
+            window.theme.cart.refresh();
+          }
+
+          window.dispatchEvent(new Event('cart:updated'));
+        })
+        .catch(error => {
+          console.error('Error adding to cart:', error);
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        });
+      }
+
+      shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      }
+
+      getRandomHeight() {
+        const heights = [25, 30, 35, 40, 45];
+        return heights[Math.floor(Math.random() * heights.length)];
+      }
+
+      shuffleAndDisplay() {
+        if (this.skeleton) {
+          this.skeleton.style.display = 'grid';
+        }
+        
+        if (this.masonry) {
+          this.masonry.classList.remove('loaded');
+        }
+
+        setTimeout(() => {
+          const shuffled = this.shuffleArray(this.items);
+          
+          this.masonry.innerHTML = '';
+          
+          shuffled.forEach((item) => {
+            const height = this.getRandomHeight();
+            item.style.gridRow = `span ${height}`;
+            this.masonry.appendChild(item);
+          });
+
+          requestAnimationFrame(() => {
+            const computedStyle = window.getComputedStyle(this.masonry);
+            const gridAutoRows = parseInt(computedStyle.gridAutoRows);
+            let maxBottom = 0;
+
+            this.items.forEach((item) => {
+              const rect = item.getBoundingClientRect();
+              const masonryRect = this.masonry.getBoundingClientRect();
+              const relativeBottom = rect.bottom - masonryRect.top;
+              maxBottom = Math.max(maxBottom, relativeBottom);
+            });
+
+            const gridHeight = Math.ceil(maxBottom / gridAutoRows) * gridAutoRows;
+            this.masonry.style.minHeight = `${gridHeight}px`;
+            this.wrapper.style.minHeight = `${gridHeight}px`;
+          });
+
+          if (this.skeleton) {
+            this.skeleton.style.display = 'none';
+          }
+          
+          if (this.masonry) {
+            this.masonry.classList.add('loaded');
+          }
+        }, this.delay);
+      }
+    }
+
+    customElements.define('shuffle-grid-{{ ai_gen_id }}', ShuffleGrid{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Best selling collection",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section title",
+      "default": "Best Selling Collection"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "range",
+      "id": "products_limit",
+      "min": 4,
+      "max": 50,
+      "step": 2,
+      "label": "Maximum products",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Shuffle settings"
+    },
+    {
+      "type": "range",
+      "id": "shuffle_delay",
+      "min": 500,
+      "max": 3000,
+      "step": 100,
+      "unit": "ms",
+      "label": "Shuffle delay",
+      "default": 1500
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Heading size",
+      "default": 36
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#2d2d2d"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "price_color",
+      "label": "Price color",
+      "default": "#ff0000"
+    },
+    {
+      "type": "color",
+      "id": "badge_color",
+      "label": "Sale badge color",
+      "default": "#ff0000"
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Section padding",
+      "default": 50
+    }
+  ],
+  "presets": [
+    {
+      "name": "Best selling collection"
+    }
+  ]
+}
+{% endschema %}
