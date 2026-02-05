@@ -91,6 +91,10 @@
     padding: 0;
   }
 
+  .ai-floating-header__nav-item-{{ ai_gen_id }} {
+    position: relative;
+  }
+
   .ai-floating-header__nav-link-{{ ai_gen_id }} {
     color: {{ block.settings.text_color }};
     text-decoration: none;
@@ -98,9 +102,66 @@
     font-weight: 500;
     transition: color 0.3s ease;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .ai-floating-header__nav-link-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.link_hover_color }};
+  }
+
+  .ai-floating-header__dropdown-icon-{{ ai_gen_id }} {
+    width: 12px;
+    height: 12px;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-floating-header__nav-item-{{ ai_gen_id }}:hover .ai-floating-header__dropdown-icon-{{ ai_gen_id }} {
+    transform: rotate(180deg);
+  }
+
+  .ai-floating-header__dropdown-{{ ai_gen_id }} {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 12px;
+    background-color: {{ block.settings.header_bg_color }};
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, {{ block.settings.shadow_opacity | divided_by: 100.0 }});
+    min-width: 220px;
+    padding: 8px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+    z-index: 1001;
+    list-style: none;
+  }
+
+  .ai-floating-header__nav-item-{{ ai_gen_id }}:hover .ai-floating-header__dropdown-{{ ai_gen_id }} {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .ai-floating-header__dropdown-item-{{ ai_gen_id }} {
+    margin: 0;
+  }
+
+  .ai-floating-header__dropdown-link-{{ ai_gen_id }} {
+    display: block;
+    padding: 12px 20px;
+    color: {{ block.settings.text_color }};
+    text-decoration: none;
+    font-size: {{ block.settings.nav_font_size }}px;
+    font-weight: 400;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .ai-floating-header__dropdown-link-{{ ai_gen_id }}:hover {
+    background-color: rgba(0, 0, 0, 0.05);
     color: {{ block.settings.link_hover_color }};
   }
 
@@ -365,7 +426,9 @@
   }
 
   .ai-floating-header__mobile-nav-link-{{ ai_gen_id }} {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 16px 20px;
     color: {{ block.settings.drawer_text_color }};
     text-decoration: none;
@@ -375,6 +438,61 @@
   }
 
   .ai-floating-header__mobile-nav-link-{{ ai_gen_id }}:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .ai-floating-header__mobile-dropdown-toggle-{{ ai_gen_id }} {
+    background: none;
+    border: none;
+    padding: 16px 20px;
+    width: 100%;
+    text-align: left;
+    color: {{ block.settings.drawer_text_color }};
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.3s ease;
+  }
+
+  .ai-floating-header__mobile-dropdown-toggle-{{ ai_gen_id }}:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .ai-floating-header__mobile-dropdown-icon-{{ ai_gen_id }} {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-floating-header__mobile-dropdown-icon-{{ ai_gen_id }}.active {
+    transform: rotate(180deg);
+  }
+
+  .ai-floating-header__mobile-submenu-{{ ai_gen_id }} {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+
+  .ai-floating-header__mobile-submenu-{{ ai_gen_id }}.active {
+    max-height: 1000px;
+  }
+
+  .ai-floating-header__mobile-submenu-link-{{ ai_gen_id }} {
+    display: block;
+    padding: 12px 20px 12px 40px;
+    color: {{ block.settings.drawer_text_color }};
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 400;
+    transition: background-color 0.3s ease;
+  }
+
+  .ai-floating-header__mobile-submenu-link-{{ ai_gen_id }}:hover {
     background-color: rgba(0, 0, 0, 0.05);
   }
 
@@ -567,10 +685,26 @@
               endif
             %}
             {% unless is_excluded %}
-              <li>
+              <li class="ai-floating-header__nav-item-{{ ai_gen_id }}">
                 <a href="{{ link.url }}" class="ai-floating-header__nav-link-{{ ai_gen_id }}">
                   {{ link.title }}
+                  {% if link.links.size > 0 %}
+                    <svg class="ai-floating-header__dropdown-icon-{{ ai_gen_id }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  {% endif %}
                 </a>
+                {% if link.links.size > 0 %}
+                  <ul class="ai-floating-header__dropdown-{{ ai_gen_id }}">
+                    {% for child_link in link.links %}
+                      <li class="ai-floating-header__dropdown-item-{{ ai_gen_id }}">
+                        <a href="{{ child_link.url }}" class="ai-floating-header__dropdown-link-{{ ai_gen_id }}">
+                          {{ child_link.title }}
+                        </a>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
               </li>
             {% endunless %}
           {% endfor %}
@@ -749,9 +883,25 @@
           %}
           {% unless is_excluded %}
             <li class="ai-floating-header__mobile-nav-item-{{ ai_gen_id }}">
-              <a href="{{ link.url }}" class="ai-floating-header__mobile-nav-link-{{ ai_gen_id }}">
-                {{ link.title }}
-              </a>
+              {% if link.links.size > 0 %}
+                <button class="ai-floating-header__mobile-dropdown-toggle-{{ ai_gen_id }}" data-mobile-dropdown-toggle>
+                  <span>{{ link.title }}</span>
+                  <svg class="ai-floating-header__mobile-dropdown-icon-{{ ai_gen_id }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div class="ai-floating-header__mobile-submenu-{{ ai_gen_id }}" data-mobile-submenu>
+                  {% for child_link in link.links %}
+                    <a href="{{ child_link.url }}" class="ai-floating-header__mobile-submenu-link-{{ ai_gen_id }}">
+                      {{ child_link.title }}
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <a href="{{ link.url }}" class="ai-floating-header__mobile-nav-link-{{ ai_gen_id }}">
+                  {{ link.title }}
+                </a>
+              {% endif %}
             </li>
           {% endunless %}
         {% endfor %}
@@ -881,6 +1031,10 @@
       window.addEventListener('cart:updated', () => {
         this.refreshCart();
       });
+
+      this.querySelectorAll('[data-mobile-dropdown-toggle]').forEach(toggle => {
+        toggle.addEventListener('click', (e) => this.toggleMobileDropdown(e.target.closest('[data-mobile-dropdown-toggle]')));
+      });
     }
 
     openCartDrawer() {
@@ -919,6 +1073,20 @@
     closeSearchModal() {
       this.searchModal.classList.remove('active');
       document.body.style.overflow = '';
+    }
+
+    toggleMobileDropdown(toggle) {
+      const submenu = toggle.nextElementSibling;
+      const icon = toggle.querySelector('.ai-floating-header__mobile-dropdown-icon-{{ ai_gen_id }}');
+      
+      if (submenu && submenu.hasAttribute('data-mobile-submenu')) {
+        const isActive = submenu.classList.contains('active');
+        
+        submenu.classList.toggle('active');
+        if (icon) {
+          icon.classList.toggle('active');
+        }
+      }
     }
 
     updateQuantity(key, change) {
